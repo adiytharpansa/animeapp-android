@@ -1,5 +1,6 @@
 package com.adiyth.animeapp
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -50,24 +51,36 @@ sealed interface Layar {
 }
 
 class MainActivity : ComponentActivity() {
+
+    /* Ekstra uji otomatis disimpan sebagai state agar tetap sampai walau
+       intent datang lewat onNewIntent (activity dipakai ulang):
+       am start ... --es autoplay_title "Chainsaw Man" --ei autoplay_episode 5 */
+    private var intentOtomatis by mutableStateOf<Pair<String, Int>?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        /* Pintu masuk uji otomatis (dipakai pengujian emulator):
-           am start ... --es autoplay_title "Chainsaw Man" --ei autoplay_episode 5 */
-        val judulOtomatis = intent?.getStringExtra("autoplay_title")
-        val episodeOtomatis = intent?.getIntExtra("autoplay_episode", 1) ?: 1
-
+        intentOtomatis = ekstrakOtomatis(intent)
         setContent {
             AnimeAppTheme {
-                Aplikasi(judulOtomatis, episodeOtomatis)
+                Aplikasi(intentOtomatis)
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        ekstrakOtomatis(intent)?.let { intentOtomatis = it }
+    }
+
+    private fun ekstrakOtomatis(sumber: Intent?): Pair<String, Int>? {
+        val judul = sumber?.getStringExtra("autoplay_title") ?: return null
+        return judul to (sumber.getIntExtra("autoplay_episode", 1))
     }
 }
 
 @Composable
-private fun Aplikasi(judulOtomatis: String?, episodeOtomatis: Int) {
+private fun Aplikasi(intentOtomatis: Pair<String, Int>?) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { Prefs(context) }
 
@@ -92,11 +105,12 @@ private fun Aplikasi(judulOtomatis: String?, episodeOtomatis: Int) {
 
     /* Pintu uji otomatis: begitu katalog API tiba, buka judul yang diminta. */
     var autoplayTerpicu by remember { mutableStateOf(false) }
-    LaunchedEffect(katalog) {
-        if (!autoplayTerpicu && judulOtomatis != null && katalog.isNotEmpty()) {
+    LaunchedEffect(katalog, intentOtomatis) {
+        val oto = intentOtomatis
+        if (!autoplayTerpicu && oto != null && katalog.isNotEmpty()) {
             autoplayTerpicu = true
-            katalog.find { it.judul.equals(judulOtomatis, ignoreCase = true) }
-                ?.let { layar = Layar.Tonton(it, episodeOtomatis) }
+            katalog.find { it.judul.equals(oto.first, ignoreCase = true) }
+                ?.let { layar = Layar.Tonton(it, oto.second) }
         }
     }
 
