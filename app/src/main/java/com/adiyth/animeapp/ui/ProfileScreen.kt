@@ -46,15 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.adiyth.animeapp.data.Anime
-import com.adiyth.animeapp.data.KATALOG
 import com.adiyth.animeapp.data.Prefs
 
 @Composable
-fun ProfileScreen(katalog: List<Anime> = KATALOG, prefs: Prefs, onBukaAnime: (Anime, Int) -> Unit) {
-    val gabungan = katalog + KATALOG.filter { bawaan -> katalog.none { it.judul == bawaan.judul } }
-    val bookmark = gabungan.filter { prefs.bookmarkAda(it.judul) }
+fun ProfileScreen(katalog: List<Anime>, prefs: Prefs, onBukaAnime: (Anime, Int) -> Unit) {
+    val bookmark = katalog.filter { prefs.bookmarkAda(it.judul) }
     val riwayat = prefs.riwayat().mapNotNull { (judul, ep) ->
-        gabungan.find { it.judul == judul }?.let { it to ep }
+        katalog.find { it.judul == judul }?.let { it to ep }
     }
     var notif by remember { mutableStateOf(true) }
 

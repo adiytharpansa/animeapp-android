@@ -36,11 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adiyth.animeapp.data.Anime
 import com.adiyth.animeapp.data.ApiClient
-import com.adiyth.animeapp.data.KATALOG
 import kotlinx.coroutines.delay
 
 @Composable
-fun SearchScreen(katalog: List<Anime> = KATALOG, onBukaAnime: (Anime) -> Unit) {
+fun SearchScreen(katalog: List<Anime>, onBukaAnime: (Anime) -> Unit) {
     var kata by remember { mutableStateOf("") }
     var genreAktif by remember { mutableStateOf("Semua") }
     val genre = listOf("Semua", "Aksi", "Petualangan", "Fantasi", "Drama", "Komedi", "Horor", "Isekai", "Misteri", "Supernatural")

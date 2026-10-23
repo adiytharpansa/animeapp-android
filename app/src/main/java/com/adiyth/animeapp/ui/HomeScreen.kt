@@ -25,10 +25,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,15 +46,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.adiyth.animeapp.data.Anime
-import com.adiyth.animeapp.data.KATALOG
 
 @Composable
 fun HomeScreen(
-    katalog: List<Anime> = KATALOG,
+    katalog: List<Anime>,
+    statusMuat: String,
+    onMuatUlang: () -> Unit,
     onBukaAnime: (Anime) -> Unit,
     onKePencarian: () -> Unit,
 ) {
-    val hero = katalog.first()
+    val hero = katalog.firstOrNull()
     val trending = katalog.sortedByDescending { it.rating.toDoubleOrNull() ?: 0.0 }
     val terbaru = katalog.sortedByDescending { it.tahun.toIntOrNull() ?: 0 }
 
@@ -87,7 +90,42 @@ fun HomeScreen(
             }
         }
 
+        /* Keadaan kosong: katalog HANYA dari API (tanpa cadangan bawaan) */
+        if (katalog.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 72.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (statusMuat == "gagal") {
+                        Text("Katalog belum bisa dimuat", color = WarnaTeks, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Periksa koneksi internet kamu, lalu coba lagi.",
+                            color = WarnaTeksAbu, fontSize = 13.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = onMuatUlang,
+                            colors = ButtonDefaults.buttonColors(containerColor = WarnaAksen),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(17.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Coba Lagi")
+                        }
+                    } else {
+                        CircularProgressIndicator(color = WarnaAksen)
+                        Spacer(Modifier.height(14.dp))
+                        Text("Memuat katalog…", color = WarnaTeksAbu, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+
         /* Hero */
+        if (hero != null) {
         item {
             Box(
                 modifier = Modifier
@@ -138,7 +176,9 @@ fun HomeScreen(
                 }
             }
         }
+        }
 
+        if (katalog.isNotEmpty()) {
         /* Trending */
         item {
             Spacer(Modifier.height(22.dp))
@@ -172,13 +212,14 @@ fun HomeScreen(
             Spacer(Modifier.height(12.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                modifier = Modifier.height(928.dp).padding(horizontal = 16.dp),
+                modifier = Modifier.height(((katalog.size + 2) / 3 * 236).dp).padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 userScrollEnabled = false
             ) {
                 items(katalog) { anime -> KartuAnime(anime, Modifier.fillMaxWidth()) { onBukaAnime(anime) } }
             }
+        }
         }
     }
 }

@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adiyth.animeapp.data.Anime
 import com.adiyth.animeapp.data.ApiClient
-import com.adiyth.animeapp.data.KATALOG
 import com.adiyth.animeapp.data.Prefs
 import com.adiyth.animeapp.ui.AnimeAppTheme
 import com.adiyth.animeapp.ui.HomeScreen
@@ -72,21 +71,33 @@ private fun Aplikasi(judulOtomatis: String?, episodeOtomatis: Int) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { Prefs(context) }
 
-    /* Katalog realtime dari API; daftar bawaan hanya tampil selama memuat /
-       bila API tak terjangkau. */
-    var katalog by remember { mutableStateOf(KATALOG) }
-    LaunchedEffect(Unit) {
+    /* Katalog HANYA dari API — tidak ada katalog bawaan/cadangan (aturan user).
+       Gagal memuat -> statusMuat "gagal" dan Beranda menawarkan Coba Lagi. */
+    var katalog by remember { mutableStateOf<List<Anime>>(emptyList()) }
+    var statusMuat by remember { mutableStateOf("memuat") }
+    var pemicuMuat by remember { mutableStateOf(0) }
+    LaunchedEffect(pemicuMuat) {
+        statusMuat = "memuat"
         runCatching { ApiClient.ambilKatalog() }
-            .onSuccess { if (it.isNotEmpty()) katalog = it }
+            .onSuccess {
+                if (it.isNotEmpty()) {
+                    katalog = it
+                    statusMuat = "siap"
+                } else statusMuat = "gagal"
+            }
+            .onFailure { statusMuat = "gagal" }
     }
 
-    var layar by remember {
-        mutableStateOf<Layar>(
-            if (judulOtomatis != null) {
-                val anime = KATALOG.find { it.judul.equals(judulOtomatis, ignoreCase = true) } ?: KATALOG.first()
-                Layar.Tonton(anime, episodeOtomatis)
-            } else Layar.Beranda
-        )
+    var layar by remember { mutableStateOf<Layar>(Layar.Beranda) }
+
+    /* Pintu uji otomatis: begitu katalog API tiba, buka judul yang diminta. */
+    var autoplayTerpicu by remember { mutableStateOf(false) }
+    LaunchedEffect(katalog) {
+        if (!autoplayTerpicu && judulOtomatis != null && katalog.isNotEmpty()) {
+            autoplayTerpicu = true
+            katalog.find { it.judul.equals(judulOtomatis, ignoreCase = true) }
+                ?.let { layar = Layar.Tonton(it, episodeOtomatis) }
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize().background(WarnaLatarDalam)) {
@@ -94,6 +105,8 @@ private fun Aplikasi(judulOtomatis: String?, episodeOtomatis: Int) {
             when (val aktif = layar) {
                 Layar.Beranda -> HomeScreen(
                     katalog = katalog,
+                    statusMuat = statusMuat,
+                    onMuatUlang = { pemicuMuat++ },
                     onBukaAnime = { layar = Layar.Tonton(it, prefs.episodeTerakhir(it.judul)) },
                     onKePencarian = { layar = Layar.Cari }
                 )
