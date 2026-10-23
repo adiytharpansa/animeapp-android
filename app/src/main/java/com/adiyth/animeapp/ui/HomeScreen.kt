@@ -48,12 +48,13 @@ import com.adiyth.animeapp.data.KATALOG
 
 @Composable
 fun HomeScreen(
+    katalog: List<Anime> = KATALOG,
     onBukaAnime: (Anime) -> Unit,
     onKePencarian: () -> Unit,
 ) {
-    val hero = KATALOG.first()
-    val trending = KATALOG.sortedByDescending { it.rating.toDoubleOrNull() ?: 0.0 }
-    val terbaru = KATALOG.sortedByDescending { it.tahun.toIntOrNull() ?: 0 }
+    val hero = katalog.first()
+    val trending = katalog.sortedByDescending { it.rating.toDoubleOrNull() ?: 0.0 }
+    val terbaru = katalog.sortedByDescending { it.tahun.toIntOrNull() ?: 0 }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(WarnaLatar),
@@ -176,7 +177,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 userScrollEnabled = false
             ) {
-                items(KATALOG) { anime -> KartuAnime(anime, Modifier.fillMaxWidth()) { onBukaAnime(anime) } }
+                items(katalog) { anime -> KartuAnime(anime, Modifier.fillMaxWidth()) { onBukaAnime(anime) } }
             }
         }
     }

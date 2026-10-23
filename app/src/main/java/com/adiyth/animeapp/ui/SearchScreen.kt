@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,15 +35,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adiyth.animeapp.data.Anime
+import com.adiyth.animeapp.data.ApiClient
 import com.adiyth.animeapp.data.KATALOG
+import kotlinx.coroutines.delay
 
 @Composable
-fun SearchScreen(onBukaAnime: (Anime) -> Unit) {
+fun SearchScreen(katalog: List<Anime> = KATALOG, onBukaAnime: (Anime) -> Unit) {
     var kata by remember { mutableStateOf("") }
     var genreAktif by remember { mutableStateOf("Semua") }
     val genre = listOf("Semua", "Aksi", "Petualangan", "Fantasi", "Drama", "Komedi", "Horor", "Isekai", "Misteri", "Supernatural")
 
-    val hasil = KATALOG.filter { anime ->
+    /* Pencarian realtime ke API (jeda 600ms); hasil lokal jadi cadangan. */
+    var hasilServer by remember { mutableStateOf<List<Anime>?>(null) }
+    LaunchedEffect(kata) {
+        if (kata.isBlank()) {
+            hasilServer = null
+        } else {
+            delay(600)
+            runCatching { ApiClient.cariKatalog(kata) }.onSuccess { hasilServer = it }
+        }
+    }
+    val dasar = if (kata.isNotBlank() && hasilServer != null) hasilServer!! else katalog
+
+    val hasil = dasar.filter { anime ->
         val cocokKata = kata.isBlank() ||
             anime.judul.lowercase().contains(kata.lowercase()) ||
             anime.genre.lowercase().contains(kata.lowercase()) ||

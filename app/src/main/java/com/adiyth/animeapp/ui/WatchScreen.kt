@@ -257,7 +257,8 @@ fun WatchScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Star, contentDescription = null, tint = WarnaBintang, modifier = Modifier.size(15.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("${anime.rating}  •  ${anime.tahun}  •  ${anime.genre}  •  ${anime.studio}", color = WarnaTeksAbu, fontSize = 12.sp)
+                        val metaBagian = listOf(anime.rating, anime.tahun, anime.genre, anime.studio).filter { it.isNotBlank() }
+                        Text(metaBagian.joinToString("  •  "), color = WarnaTeksAbu, fontSize = 12.sp)
                     }
                     Spacer(Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {

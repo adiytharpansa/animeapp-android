@@ -20,6 +20,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adiyth.animeapp.data.Anime
+import com.adiyth.animeapp.data.ApiClient
 import com.adiyth.animeapp.data.KATALOG
 import com.adiyth.animeapp.data.Prefs
 import com.adiyth.animeapp.ui.AnimeAppTheme
@@ -70,6 +72,14 @@ private fun Aplikasi(judulOtomatis: String?, episodeOtomatis: Int) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { Prefs(context) }
 
+    /* Katalog realtime dari API; daftar bawaan hanya tampil selama memuat /
+       bila API tak terjangkau. */
+    var katalog by remember { mutableStateOf(KATALOG) }
+    LaunchedEffect(Unit) {
+        runCatching { ApiClient.ambilKatalog() }
+            .onSuccess { if (it.isNotEmpty()) katalog = it }
+    }
+
     var layar by remember {
         mutableStateOf<Layar>(
             if (judulOtomatis != null) {
@@ -83,13 +93,16 @@ private fun Aplikasi(judulOtomatis: String?, episodeOtomatis: Int) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             when (val aktif = layar) {
                 Layar.Beranda -> HomeScreen(
+                    katalog = katalog,
                     onBukaAnime = { layar = Layar.Tonton(it, prefs.episodeTerakhir(it.judul)) },
                     onKePencarian = { layar = Layar.Cari }
                 )
                 Layar.Cari -> SearchScreen(
+                    katalog = katalog,
                     onBukaAnime = { layar = Layar.Tonton(it, prefs.episodeTerakhir(it.judul)) }
                 )
                 Layar.Profil -> ProfileScreen(
+                    katalog = katalog,
                     prefs = prefs,
                     onBukaAnime = { anime, ep -> layar = Layar.Tonton(anime, ep) }
                 )

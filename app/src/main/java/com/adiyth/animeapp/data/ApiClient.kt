@@ -65,4 +65,45 @@ object ApiClient {
                 )
             }
         }
+
+    /** Katalog realtime dari API: GET /api/v1/anime -> { success, data: [...] } */
+    suspend fun ambilKatalog(): List<Anime> = ambilDaftar("$BASE/api/v1/anime")
+
+    /** Pencarian realtime dari API: GET /api/v1/anime?q=... */
+    suspend fun cariKatalog(kataKunci: String): List<Anime> =
+        ambilDaftar("$BASE/api/v1/anime?q=" + java.net.URLEncoder.encode(kataKunci, "UTF-8"))
+
+    private suspend fun ambilDaftar(url: String): List<Anime> = withContext(Dispatchers.IO) {
+        val req = Request.Builder().url(url).get().build()
+        http.newCall(req).execute().use { res ->
+            val badan = res.body?.string().orEmpty()
+            if (!res.isSuccessful) throw IllegalStateException("API menjawab ${res.code}")
+            val json = JSONObject(badan)
+            if (!json.optBoolean("success")) {
+                throw IllegalStateException(json.optString("error", "Katalog gagal"))
+            }
+            val arr = json.getJSONArray("data")
+            val hasil = ArrayList<Anime>()
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                val judul = o.optString("judul")
+                if (judul.isBlank()) continue
+                val ratingMentah = o.optDouble("rating", 0.0)
+                val tahunMentah = o.optInt("tahun", 0)
+                hasil.add(
+                    Anime(
+                        judul = judul,
+                        poster = o.optString("poster"),
+                        rating = if (ratingMentah > 0) String.format(java.util.Locale.US, "%.1f", ratingMentah) else "",
+                        tahun = if (tahunMentah > 0) tahunMentah.toString() else "",
+                        genre = o.optString("genre"),
+                        totalEpisode = o.optInt("totalEpisode", 12),
+                        studio = o.optString("studio"),
+                        sinopsis = o.optString("sinopsis"),
+                    )
+                )
+            }
+            hasil
+        }
+    }
 }

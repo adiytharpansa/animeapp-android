@@ -50,10 +50,11 @@ import com.adiyth.animeapp.data.KATALOG
 import com.adiyth.animeapp.data.Prefs
 
 @Composable
-fun ProfileScreen(prefs: Prefs, onBukaAnime: (Anime, Int) -> Unit) {
-    val bookmark = KATALOG.filter { prefs.bookmarkAda(it.judul) }
+fun ProfileScreen(katalog: List<Anime> = KATALOG, prefs: Prefs, onBukaAnime: (Anime, Int) -> Unit) {
+    val gabungan = katalog + KATALOG.filter { bawaan -> katalog.none { it.judul == bawaan.judul } }
+    val bookmark = gabungan.filter { prefs.bookmarkAda(it.judul) }
     val riwayat = prefs.riwayat().mapNotNull { (judul, ep) ->
-        KATALOG.find { it.judul == judul }?.let { it to ep }
+        gabungan.find { it.judul == judul }?.let { it to ep }
     }
     var notif by remember { mutableStateOf(true) }
 
@@ -88,7 +89,7 @@ fun ProfileScreen(prefs: Prefs, onBukaAnime: (Anime, Int) -> Unit) {
                 Spacer(Modifier.width(10.dp))
                 StatBox(Modifier.weight(1f), "${bookmark.size}", "Bookmark")
                 Spacer(Modifier.width(10.dp))
-                StatBox(Modifier.weight(1f), "10", "Katalog")
+                StatBox(Modifier.weight(1f), "${katalog.size}", "Katalog")
             }
             Spacer(Modifier.height(24.dp))
         }
