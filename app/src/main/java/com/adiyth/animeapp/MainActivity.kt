@@ -109,8 +109,10 @@ private fun Aplikasi(intentOtomatis: Pair<String, Int>?) {
         val oto = intentOtomatis
         if (!autoplayTerpicu && oto != null && katalog.isNotEmpty()) {
             autoplayTerpicu = true
-            katalog.find { it.judul.equals(oto.first, ignoreCase = true) }
-                ?.let { layar = Layar.Tonton(it, oto.second) }
+            katalog.find {
+                it.judul.equals(oto.first, ignoreCase = true) ||
+                    it.judul.startsWith(oto.first, ignoreCase = true)
+            }?.let { layar = Layar.Tonton(it, oto.second) }
         }
     }
 

@@ -70,7 +70,7 @@ jobs:
             adb exec-out screencap -p > uji-beranda.png
             adb shell am force-stop com.adiyth.animeapp
             sleep 2
-            adb shell am start -n com.adiyth.animeapp/.MainActivity --es autoplay_title "Chainsaw Man" --ei autoplay_episode 5
+            adb shell 'am start -n com.adiyth.animeapp/.MainActivity --es autoplay_title "Chainsaw Man" --ei autoplay_episode 5'
             sleep 55
             adb exec-out screencap -p > uji-putar-1.png
             sleep 25
